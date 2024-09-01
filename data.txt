@@ -1,0 +1,6 @@
+torch.nn.Conv1d
+torch.nn.Conv2d
+torch.nn.Conv3d
+torch.nn.ConstantPad1d
+torch.nn.ConstantPad2d
+torch.nn.ConstantPad3d

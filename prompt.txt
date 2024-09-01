@@ -1,0 +1,7 @@
+Generate a program that invokes the API: {}
+Must include: device = torch.device("cuda") and .to(device)
+Name output as output_tensor
+Do not include iterations over 1
+Output code with no markup or unnecessary text
+
+
