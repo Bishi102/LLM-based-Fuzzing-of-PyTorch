@@ -1,27 +1,34 @@
-from dotenv import load_dotenv
-from openai import OpenAI
 import os
-import anthropic
-import sys
-import traceback
 import re
 
-load_dotenv()
-claude_client = anthropic.Anthropic(
-    api_key = os.getenv('ANTHROPIC_API_KEY')
-)
+from dotenv import load_dotenv
+from openai import OpenAI
 
-gpt_client = OpenAI(api_key = os.getenv('OPENAI_API_KEY'))
+load_dotenv()
 
 def gpt_generate_snippet(prompt):
-    completion = gpt_client.chat.completions.create(
-        model = "gpt-4o-mini",
-        messages = [
-            {"role": "system", "content": "You are an expert in Python and PyTorch."},
-            {"role": "user", "content": prompt}
-        ]
-    )
-    return clean_snippet(completion.choices[0].message.content)
+    chat_history = []
+    gpt_client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+    
+    for attempt in range(5):
+        chat_history.append({"role": "user", "content": prompt})
+        try:
+            completion = gpt_client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=chat_history
+            )
+            snippet = clean_snippet(completion.choices[0].message.content)
+            if validate_snippet(snippet):
+                return snippet
+            print(snippet)
+            chat_history.append({"role": "assistant", "content": f"The code generated does not run due to the following issue."})
+        except Exception as e:
+            print(f"Exception occurred during snippet generation: {e}")
+        prompt = f"The code generated does not run due to the following issue. Please try again with the same prompt: \n{prompt}"
+        chat_history.append({"role": "user", "content": prompt})
+
+    print("Failed to generate a valid snippet after multiple attempts.")
+    return snippet
 
 def clean_snippet(snippet):
     clean = []

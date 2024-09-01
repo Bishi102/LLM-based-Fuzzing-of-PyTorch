@@ -1,4 +1,4 @@
-Generate a program that invokes the API: {}
+Generate a running program that invokes the API: {}
 Must include: device = torch.device("cuda") and .to(device)
 Name output as output_tensor
 Do not include iterations over 1
