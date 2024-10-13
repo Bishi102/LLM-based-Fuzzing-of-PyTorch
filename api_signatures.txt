@@ -1,5 +1,0 @@
-torch.nn.parallel.data_parallel(module, inputs, device_ids, torch.device]]] = None, output_device, torch.device, NoneType] = None, dim, module_kwargs
-torch.nn.parallel.parallel_apply(modules, inputs, kwargs_tup, Any]]] = None, devices, torch.device, NoneType]]] = None) 
-torch.nn.parallel.replicate(network, devices, torch.device]], detach
-torch.nn.utils.spectral_norm(module, name, n_power_iterations, eps, dim
-torch.nn.utils.weight_norm(module, name, dim

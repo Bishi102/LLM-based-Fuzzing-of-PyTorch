@@ -1,4 +1,5 @@
 torch.BFloat16Storage
+torch.split
 torch.BoolStorage
 torch.ByteStorage
 torch.CharStorage
