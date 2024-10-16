@@ -1,39 +1,38 @@
 import os
 import re
 
-from dotenv import load_dotenv
 from openai import OpenAI
+from dotenv import load_dotenv
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
-load_dotenv() # loads .env file variables
+load_dotenv()
 
-def gpt_generate_snippet(prompt):
-  prompt = f"""
-  
-  """
-  chat_history = []
-  gpt_client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
-  for attempt in range(5):
-      chat_history.append({"role": "user", "content": prompt})
-      try:
-          completion = gpt_client.chat.completions.create(
-              model="gpt-4o-mini",
-              messages=chat_history
-          )
-          snippet = clean_snippet(completion.choices[0].message.content)
-          if validate_snippet(snippet):
-              return snippet
-          print(snippet)
-          chat_history.append({"role": "assistant", "content": f"The code generated does not run due to the following issue."})
-      except Exception as e:
-          print(f"Exception occurred during snippet generation: {e}")
-      prompt = f"The code generated does not run due to the following issue. Please try again with the same prompt: \n{prompt}"
-      chat_history.append({"role": "user", "content": prompt})
+client = OpenAI(
+  api_key = os.getenv('OPENAI_API_KEY')
+)
 
-  print("Failed to generate a valid snippet after multiple attempts.")
-  return snippet
+# Function to generate a code snippet using the OpenAI API
+def get_snippet(prompt, seed):
+    snippet = client.chat.completions.create(
+        model="gpt-4o",
+        top_p=0.95,
+        max_completion_tokens=256,
+        temperature=0.4,
+        seed = seed,
+        messages=[
+            {"role": "system", "content": "You are a helpful coding assistant."},
+            {"role": "user", "content": prompt}
+        ]
+    )
+    return snippet['choices'][0]['message']['content']
 
-
-
+def get_snippets(prompt, num_snippets=5):
+    with ThreadPoolExecutor() as executor:
+        futures = [executor.submit(get_snippet, prompt, seed=i) for i in range(1, num_snippets + 1)]
+        snippets = []
+        for future in as_completed(futures):
+            snippets.append(future.result())
+    return snippets
 
 def clean_snippet(snippet):
     clean = []
@@ -44,10 +43,6 @@ def clean_snippet(snippet):
         if line.strip():
             clean.append(line)
     return '\n'.join(clean)
-
-
-
-
 
 def validate_snippet(snippet):
     env = {}
