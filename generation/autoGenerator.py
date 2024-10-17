@@ -12,38 +12,43 @@ client = OpenAI(
 )
 
 # Function to generate a code snippet using the OpenAI API
-def get_snippet(prompt, seed):
-    snippet = client.chat.completions.create(
-        model="gpt-4o",
-        top_p=0.95,
-        max_completion_tokens=256,
-        temperature=0.4,
-        seed = seed,
-        messages=[
-            {"role": "system", "content": "You are a helpful coding assistant."},
+def get_snippet(prompt, n):
+    snippets = []
+    messages=[
+            {"role": "system", "content": "You are an expert in Python and PyTorch, only respond with code and no comments"},
             {"role": "user", "content": prompt}
-        ]
-    )
-    return snippet['choices'][0]['message']['content']
+    ]
+    for i in range(n):
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            top_p=0.95,
+            max_completion_tokens=128,
+            temperature=0.4,
+            messages=messages
+        )
+        snippet = clean_snippet(response.choices[0].message.content)
+        snippets.append(snippet)
+        messages.append({"role": "assistant", "content": snippet})
+        messages.append({"role": "user", "content": f"{prompt}\nGenerate a new variation in terms of input data, tensor size/dimension, and api parameters"})
+    return snippets
 
+#unused rn
 def get_snippets(prompt, num_snippets=5):
     with ThreadPoolExecutor() as executor:
-        futures = [executor.submit(get_snippet, prompt, seed=i) for i in range(1, num_snippets + 1)]
+        futures = [executor.submit(get_snippet, prompt, seed=i*420) for i in range(1, num_snippets + 1)]
         snippets = []
         for future in as_completed(futures):
             snippets.append(future.result())
     return snippets
 
 def clean_snippet(snippet):
-    clean = []
-    for line in snippet.splitlines():
-        line = re.sub(r'#.*', '', line).rstrip()
-        if line.startswith('```'):
-            continue
-        if line.strip():
-            clean.append(line)
-    return '\n'.join(clean)
-
+    cleaned = re.sub(r"```python|```", "", snippet)
+    cleaned = "\n".join(
+        line for line in cleaned.splitlines() if not re.match(r"^\s*print\(", line)
+    )
+    cleaned = cleaned.strip()
+    return cleaned
+#review this
 def validate_snippet(snippet):
     env = {}
     try:
