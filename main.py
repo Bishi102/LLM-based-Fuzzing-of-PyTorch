@@ -19,7 +19,7 @@ def main():
     prompt = """
 Task 1: import torch
 Task 2: Generate input data
-Task 3: Call the API torch.meshgrid(*tensors, indexing: Optional[str] = None)
+Task 3: Call the API torch.nn.LazyBatchNorm3d(eps=1e-05, momentum=0.1, affine=True, track_running_stats=True, device=None, dtype=None)
 """
     snippets = gen.get_snippet(prompt, 5)
     print(snippets[0])

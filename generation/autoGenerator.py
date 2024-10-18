@@ -22,8 +22,8 @@ def get_snippet(prompt, n):
         response = client.chat.completions.create(
             model="gpt-4o",
             top_p=0.95,
-            max_completion_tokens=128,
             temperature=0.4,
+            # max_completion_tokens=128,
             messages=messages
         )
         snippet = clean_snippet(response.choices[0].message.content)
@@ -32,7 +32,7 @@ def get_snippet(prompt, n):
         messages.append({"role": "user", "content": f"{prompt}\nGenerate a new variation in terms of input data, tensor size/dimension, and api parameters"})
     return snippets
 
-#unused rn
+#unused func right now
 def get_snippets(prompt, num_snippets=5):
     with ThreadPoolExecutor() as executor:
         futures = [executor.submit(get_snippet, prompt, seed=i*420) for i in range(1, num_snippets + 1)]

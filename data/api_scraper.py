@@ -3,8 +3,9 @@ import sys
 
 from io import StringIO
 
+# extract full api signature given api name
 def extract_sig(api_name):
-    
+
     buffer = StringIO()
     sys.stdout = buffer
 
@@ -16,7 +17,7 @@ def extract_sig(api_name):
     sys.stdout = sys.__stdout__
 
     help_output = buffer.getvalue()
-    first_five_lines = help_output.splitlines()[:5] #observed: api signature occurs in first 5 lines 
+    first_five_lines = help_output.splitlines()[:5] # observed: api signature occurs in first 5 lines 
     api_base = api_name.split('.')[-1]
     occurrences = [line for line in first_five_lines if f"{api_base}(" in line]
 
