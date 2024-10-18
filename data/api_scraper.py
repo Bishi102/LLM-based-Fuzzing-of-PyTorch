@@ -1,5 +1,6 @@
 import re
 import sys
+import random
 
 from io import StringIO
 
@@ -16,7 +17,7 @@ def extract_sig(api_name):
     sys.stdout = sys.__stdout__
 
     help_output = buffer.getvalue()
-    first_five_lines = help_output.splitlines()[:5] #observed: api signature occurs in first 5 lines 
+    first_five_lines = help_output.splitlines()[:5] # observed: api signature occurs in first 5 lines 
     api_base = api_name.split('.')[-1]
     occurrences = [line for line in first_five_lines if f"{api_base}(" in line]
 
@@ -61,3 +62,16 @@ def write_file(output_file, api_signatures):
     with open(output_file, 'w') as file:
         for api, signature in api_signatures:
             file.write(f"{api}({signature})\n")
+
+# 100 api signatures from titanfuzz list
+def get_sample_100():
+    api_list = read_file('api_list.txt')
+    api_signatures = []
+    random_apis = random.sample(api_list, 100)
+    for api in random_apis:
+        try:
+            signature = extract_sig(api)
+            api_signatures.append((api, signature))
+        except Exception as e:
+            print(f"Error while fetching help for {api}: {e}")
+    write_file('api_signatures.txt', api_signatures)

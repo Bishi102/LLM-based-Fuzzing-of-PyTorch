@@ -1,9 +1,11 @@
 import os
 import re
+import time
 
 from openai import OpenAI
 from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from data import fitness_score as fitness
 
 load_dotenv()
 
@@ -11,14 +13,18 @@ client = OpenAI(
   api_key = os.getenv('OPENAI_API_KEY')
 )
 
-# Function to generate a code snippet using the OpenAI API
+# Function to generate a code snippet using the OpenAI python SDK
 def get_snippet(prompt, n):
     snippets = []
     messages=[
             {"role": "system", "content": "You are an expert in Python and PyTorch, only respond with code and no comments"},
             {"role": "user", "content": prompt}
     ]
-    for i in range(n):
+    start_time = time.time()
+    while len(snippets) < n:
+        if time.time() - start_time > 15:
+            print("Time limit reached. Stopping snippet generation.")
+            break
         response = client.chat.completions.create(
             model="gpt-4o",
             top_p=0.95,
@@ -27,35 +33,35 @@ def get_snippet(prompt, n):
             messages=messages
         )
         snippet = clean_snippet(response.choices[0].message.content)
-        snippets.append(snippet)
-        messages.append({"role": "assistant", "content": snippet})
-        messages.append({"role": "user", "content": f"{prompt}\nGenerate a new variation in terms of input data, tensor size/dimension, and api parameters"})
-    return snippets
-
-#unused rn
-def get_snippets(prompt, num_snippets=5):
-    with ThreadPoolExecutor() as executor:
-        futures = [executor.submit(get_snippet, prompt, seed=i*420) for i in range(1, num_snippets + 1)]
-        snippets = []
-        for future in as_completed(futures):
-            snippets.append(future.result())
+        print(f"Fitness score: {fitness.calculate_dataflow_depth(snippet)}")
+        print(snippet) 
+        print("------------------\n")
+        is_valid, error_message = validate_snippet(snippet)
+        if is_valid:
+            snippets.append(snippet)
+            messages.append({"role": "assistant", "content": snippet})
+            messages.append({"role": "user", "content": f"{prompt}\nGenerate a new variation in terms of input data, tensor size/dimension, and api parameters"})
+        else:
+            messages.append({"role": "assistant", "content": snippet})
+            messages.append({"role": "user", "content": f"{prompt}\nThe previous response encountered the error below:\n{error_message}"})
     return snippets
 
 def clean_snippet(snippet):
     cleaned = re.sub(r"```python|```", "", snippet)
     cleaned = "\n".join(
-        line for line in cleaned.splitlines() if not re.match(r"^\s*print\(", line)
+        line for line in cleaned.splitlines() 
+        if not re.match(r"^\s*print\(", line) and not re.match(r"^\s*#", line)
     )
     cleaned = cleaned.strip()
     return cleaned
-#review this
+
 def validate_snippet(snippet):
     env = {}
     try:
         exec(snippet, env)
-        return True
+        return True, ""
     except Exception as e:
         print(f"Snippet failed with error: {e}")
-        return False
+        return False, str(e)
 
 
