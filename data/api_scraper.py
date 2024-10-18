@@ -4,8 +4,9 @@ import random
 
 from io import StringIO
 
+# extract full api signature given api name
 def extract_sig(api_name):
-    
+
     buffer = StringIO()
     sys.stdout = buffer
 
